@@ -3,7 +3,6 @@ import { headers } from "next/headers";
 import { clerkClient, WebhookEvent } from "@clerk/nextjs/server";
 import { createUser } from "@/actions/user.action";
 import { NextResponse } from "next/server";
-import { ClerkClient } from "@clerk/clerk-sdk-node";
 
 interface UserCreatedData {
   id: string;
@@ -62,12 +61,16 @@ export async function POST(req: Request) {
     try {
       const newUser = await createUser(user);
       if (newUser) {
-        const client = clerkClient as unknown as ClerkClient;
+        // Ensure to call clerkClient() to get the ClerkClient instance
+        const client = await clerkClient(); // Await the function to get the actual client instance
+
+        // Now you can safely use client.users.updateUserMetadata
         await client.users.updateUserMetadata(id, {
           publicMetadata: {
             userId: newUser._id,
           },
         });
+
         return NextResponse.json({ message: "New user created", user: newUser });
       }
     } catch (error) {
